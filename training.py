@@ -49,8 +49,8 @@ def get_image_augmentation():
 
 
 def training():
-    # train = get_data('input/train')
-    train = get_data('input/test')
+    train = get_data('input/train')
+   
 
     l = []
     for i in train:
