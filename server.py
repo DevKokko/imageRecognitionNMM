@@ -8,11 +8,16 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 import logging
 import tensorflow as tf
 import numpy as np
-from util import labels, img_size, get_data, plot_spot
+from util import labels, img_size, get_data, plot_spot, decode_base64
 import sys
-from sklearn.metrics import classification_report
+import base64
+import cv2
+import matplotlib.pyplot as plt
+from urllib.parse import urlparse, parse_qs
+import json
 
 
+model = None;
 class S(BaseHTTPRequestHandler):
     def _set_response(self):
         self.send_response(200)
@@ -28,31 +33,39 @@ class S(BaseHTTPRequestHandler):
         data = get_data("input/web_ui")
         x_test = []
         y_test = []
+        
 
         for feature, label in data:
             x_test.append(feature)
             y_test.append(label)
 
         x_test = np.array(x_test)
+         # REMEMBER YOU'RE PASSING A LIST OF THINGS YOU WISH TO PREDICT
 
-        model = tf.keras.models.load_model("model.h5")
-        prediction_matrices = model.predict(x_test)  # REMEMBER YOU'RE PASSING A LIST OF THINGS YOU WISH TO PREDICT
+       
+        content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
+        post_data = self.rfile.read(content_length) # <--- Gets the data itself
+        # parsed_url = urlparse(post_data)
 
+        images = decode_base64(json.loads(post_data.decode("utf-8"))["data"])
+        
+        prediction_matrices = model.predict(images)
         predictions = []
         for i, prediction in enumerate(prediction_matrices):
 
-            predictions.append(np.argmax(prediction))
+            predictions.append(str(np.argmax(prediction)))
             label = labels[np.argmax(prediction)]
-        content_length = int(self.headers['Content-Length']) # <--- Gets the size of data
-        post_data = self.rfile.read(content_length) # <--- Gets the data itself
+
         logging.info("POST request,\nPath: %s\nHeaders:\n%s\n\nBody:\n%s\n",
                 str(self.path), str(self.headers), post_data.decode('utf-8'))
 
         self._set_response()
-        self.wfile.write("POST request for {}".format(prediction).encode('utf-8'))
+        self.wfile.write(",".join(predictions).encode('utf-8'))
         
 
 def run(server_class=HTTPServer, handler_class=S, port=8080):
+    global model
+    model = tf.keras.models.load_model("model.h5")
     logging.basicConfig(level=logging.INFO)
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
@@ -65,4 +78,5 @@ def run(server_class=HTTPServer, handler_class=S, port=8080):
     logging.info('Stopping httpd...\n')
 
 if __name__ == "__main__":
+    
     run()

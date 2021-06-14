@@ -15,7 +15,8 @@ def testing():
         y_test.append(label)
 
     x_test = np.array(x_test)
-
+    # print(x_test)
+    
     # print(data[0])
     # sys.exit(1)
 
@@ -28,6 +29,9 @@ def testing():
         # print(prediction)
         predictions.append(np.argmax(prediction))
         label = labels[np.argmax(prediction)]
+        
+        
+       
         # assert predictions[-1] == y_test[i], "paixthke trolia"
         # plot_spot()
         # print("-> Predicted marker: ", label)
@@ -35,11 +39,11 @@ def testing():
 
     print(classification_report(y_test, predictions, target_names = ['Blue (Class 0)','Empty (Class 1)','Yellow (Class 2)']))
 
-    # print(prediction)
+    print(prediction)
     # return
-    # prediction = prediction[0]
-    # print(prediction)
-    # print(labels[int(prediction)])
+    prediction = prediction[0]
+    print(prediction)
+    print(labels[int(prediction)])
 
 
 
