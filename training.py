@@ -8,6 +8,7 @@ from tensorflow.keras.losses import SparseCategoricalCrossentropy
 from sklearn.metrics import classification_report,confusion_matrix
 import sys
 import numpy as np
+import tensorflow.keras.utils as utils
 from util import labels, img_size, get_data, plot_spot
 
 
@@ -28,6 +29,8 @@ def build_model(filters, layersN):
     model.add(Dense(3, activation="softmax"))
 
     model.summary()
+    # utils.plot_model(model, to_file=f'model_schema.png', show_shapes=True, show_layer_names=False)
+    # sys.exit(3)
     return model
 
 
