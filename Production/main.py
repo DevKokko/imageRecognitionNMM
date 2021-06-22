@@ -98,19 +98,23 @@ datagen = ImageDataGenerator(
 datagen.fit(x_train)
 
 model = Sequential()
-model.add(Conv2D(32,3,padding="same", activation="relu", input_shape=(58,58,3)))
+model.add(Conv2D(32, 3, padding="same", activation="relu", input_shape=(58,58,3)))
+#32x3x3x3+(1*32)
 model.add(MaxPool2D())
 
 model.add(Conv2D(32, 3, padding="same", activation="relu"))
+#32x3x3x32+32
 model.add(MaxPool2D())
-
 model.add(Conv2D(64, 3, padding="same", activation="relu"))
+#64x3x3x32+64
 model.add(MaxPool2D())
-model.add(Dropout(0.4))
+model.add(Dropout(0.4)) #shape -> 7x7x64
 
 model.add(Flatten())
 model.add(Dense(128,activation="relu"))
+#7x7x64x128 + 128
 model.add(Dense(3, activation="softmax"))
+#3x128+3
 
 model.summary()
 #utils.plot_model(model, to_file=f'model_schema.png', show_shapes=True, show_layer_names=False)
