@@ -5,6 +5,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv2D , MaxPool2D , Flatten , Dropout 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.optimizers import Adam
+import tensorflow.keras.utils as utils
 
 from sklearn.metrics import classification_report,confusion_matrix
 
@@ -12,6 +13,8 @@ import tensorflow as tf
 
 import cv2
 import os
+
+import sys
 
 import numpy as np
 
@@ -109,17 +112,20 @@ model.add(Dense(128,activation="relu"))
 model.add(Dense(3, activation="softmax"))
 
 model.summary()
+#utils.plot_model(model, to_file=f'model_schema.png', show_shapes=True, show_layer_names=False)
+#sys.exit(3);
+
 opt = Adam(lr=0.005)
 model.compile(optimizer = opt , loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True) , metrics = ['accuracy'])
 
-history = model.fit(x_train,y_train,epochs = 30 , validation_data = (x_val, y_val))
+history = model.fit(x_train,y_train,epochs = 40 , validation_data = (x_val, y_val))
 
 acc = history.history['accuracy']
 val_acc = history.history['val_accuracy']
 loss = history.history['loss']
 val_loss = history.history['val_loss']
 
-epochs_range = range(30)
+epochs_range = range(40)
 
 plt.figure(figsize=(15, 15))
 plt.subplot(2, 2, 1)
