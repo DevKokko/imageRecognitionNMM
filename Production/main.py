@@ -1,75 +1,31 @@
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv2D , MaxPool2D , Flatten , Dropout 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 import tensorflow.keras.utils as utils
 
+from util import labels, img_size, get_data, plot, result_plot, generate_model
+
 from sklearn.metrics import classification_report,confusion_matrix
+from sklearn.model_selection import train_test_split
 
 import tensorflow as tf
 
-import cv2
-import os
-
-import sys
-
 import numpy as np
 
-labels = ['blue', 'yellow', 'empty']
-img_size = 58
-def get_data(data_dir):
-    data = [] 
-    for label in labels: 
-        path = os.path.join(data_dir, label)
-        class_num = labels.index(label)
-        for img in os.listdir(path):
-            try:
-                img_arr = cv2.imread(os.path.join(path, img))[...,::-1] #convert BGR to RGB format
-                resized_arr = cv2.resize(img_arr, (img_size, img_size)) # Reshaping images to preferred size
-                data.append([resized_arr, class_num])
-            except Exception as e:
-                print(e)
-    return np.array(data)
-
 train = get_data('input/train')
-val = get_data('input/val')
 
-l = []
-for i in train:
-    if(i[1] == 0):
-        l.append("blue")
-    elif(i[1] == 1):
-        l.append("yellow")
-    else:
-        l.append("empty")
-sns.set_style('darkgrid')
-sns.countplot(l)
+plot(train)
 
-plt.figure(figsize = (5,5))
-plt.imshow(train[1][0])
-plt.title(labels[train[0][1]])
-
-plt.figure(figsize = (5,5))
-plt.imshow(train[-1][0])
-plt.title(labels[train[-1][1]])
-
-
-x_train = []
-y_train = []
+data = []
+labels = []
 x_val = []
 y_val = []
 
 for feature, label in train:
-  x_train.append(feature)
-  y_train.append(label)
+  data.append(feature)
+  labels.append(label)
 
-for feature, label in val:
-  x_val.append(feature)
-  y_val.append(label)
+x_train, x_val, y_train, y_val = train_test_split(data, labels, test_size=0.33, shuffle= True)
 
 # Normalize the data
 x_train = np.array(x_train) / 255
@@ -94,59 +50,18 @@ datagen = ImageDataGenerator(
         horizontal_flip = True,  # randomly flip images
         vertical_flip=True)  # randomly flip images
 
-
 datagen.fit(x_train)
 
-model = Sequential()
-model.add(Conv2D(32, 3, padding="same", activation="relu", input_shape=(58,58,3)))
-#32x3x3x3+(1*32)
-model.add(MaxPool2D())
-
-model.add(Conv2D(32, 3, padding="same", activation="relu"))
-#32x3x3x32+32
-model.add(MaxPool2D())
-model.add(Conv2D(64, 3, padding="same", activation="relu"))
-#64x3x3x32+64
-model.add(MaxPool2D())
-model.add(Dropout(0.4)) #shape -> 7x7x64
-
-model.add(Flatten())
-model.add(Dense(128,activation="relu"))
-#7x7x64x128 + 128
-model.add(Dense(3, activation="softmax"))
-#3x128+3
-
-model.summary()
-#utils.plot_model(model, to_file=f'model_schema.png', show_shapes=True, show_layer_names=False)
-#sys.exit(3);
+model = generate_model()
+utils.plot_model(model, to_file=f'model_schema.png', show_shapes=True, show_layer_names=False)
 
 opt = Adam(lr=0.005)
 model.compile(optimizer = opt , loss = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True) , metrics = ['accuracy'])
 
 es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=5)
-
 history = model.fit(x_train,y_train,epochs = 50 , validation_data = (x_val, y_val), callbacks=[es])
 
-acc = history.history['accuracy']
-val_acc = history.history['val_accuracy']
-loss = history.history['loss']
-val_loss = history.history['val_loss']
-
-epochs_range = range(len(history.history['val_loss']))
-
-plt.figure(figsize=(15, 15))
-plt.subplot(2, 2, 1)
-plt.plot(epochs_range, acc, label='Training Accuracy')
-plt.plot(epochs_range, val_acc, label='Validation Accuracy')
-plt.legend(loc='lower right')
-plt.title('Training and Validation Accuracy')
-
-plt.subplot(2, 2, 2)
-plt.plot(epochs_range, loss, label='Training Loss')
-plt.plot(epochs_range, val_loss, label='Validation Loss')
-plt.legend(loc='upper right')
-plt.title('Training and Validation Loss')
-plt.show()
+result_plot(history)
 
 predictions = model.predict_classes(x_val)
 predictions = predictions.reshape(1,-1)[0]
